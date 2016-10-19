@@ -50,32 +50,9 @@ randomForClasses <- predict(mod_rf, newdata = validation)
 #the random forest approach on the smaller but complete number of variables
 #performs very well:
 confusionMatrix(randomForClasses, validation$classe)
-
-# Confusion Matrix and Statistics
-# 
-# Reference
-# Prediction    A    B    C    D    E
-# A 1672    2    0    0    0
-# B    1 1132    1    0    2
-# C    0    1 1025    6    0
-# D    0    4    0  958    2
-# E    1    0    0    0 1078
-# 
-# Overall Statistics
-# 
-# Accuracy : 0.9966          
-# 95% CI : (0.9948, 0.9979)
-# No Information Rate : 0.2845          
-# P-Value [Acc > NIR] : < 2.2e-16       
-# 
-# Kappa : 0.9957          
-# Mcnemar's Test P-Value : NA      
      
 
 #finally, let's find the classes of the provided testing set.
 assignment_testing <- read.csv("pml-testing.csv")
 randomForClasses_test <- predict(mod_rf, newdata = assignment_testing)
 randomForClasses_test
-
-
-
