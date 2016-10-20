@@ -1,0 +1,90 @@
+---
+title: "report"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data preparation
+
+We start by checking whether there are zero or near-zero variance variables in the dataset:
+
+```{r}
+library(caret)
+library(randomForest)
+
+dataset <- read.csv("pml-training.csv")
+nzv <- nearZeroVar(dataset, saveMetrics = TRUE)
+nzv
+```
+
+No variable has zero variance, but 60 have near-zero. To make computation faster, we try to work without near-zero variance variables:
+
+
+```{r}
+nzv <- nearZeroVar(dataset)
+dataset <- dataset[, -nzv]
+```
+
+We remove columns that should not have predicting power: row numbers and time stamps (it's not a time series)
+
+```{r}
+drops <- c("X",
+           "raw_timestamp_part_1",
+           "raw_timestamp_part_2",
+           "cvtd_timestamp")
+dataset <- dataset[ , !names(dataset) %in% drops]
+```
+
+The randomForest algorithm we'll use later gives error for partially filled datasets: let's try to fit a random Forest model only using 'complete' variables:
+
+```{r}
+NAvars <- sapply(dataset, function(x) mean(is.na(x))) > 0.95
+dataset <- dataset[NAvars==FALSE]
+```
+
+Finally, we split the training dataset into training and validation sets. We'll use the former to fit our model, and the later to validate it:
+
+```{r}
+set.seed(113)
+inTrain = createDataPartition(y = dataset$classe, p = 0.7, list=FALSE)
+training = dataset[inTrain,]
+validation = dataset[-inTrain,]
+```
+
+## Random Forest
+
+```{r}
+
+set.seed(211)
+ctrl <- trainControl(method = "cv",
+                     verboseIter = FALSE)
+mod_rf <- train(classe ~ .,
+                method = "rf",
+                data = training,
+                trControl = ctrl,
+                #centers and scales predictors
+                preProc = c("center", "scale"))
+```
+
+We test our model on an out-of-sample validation test, different than the training one we fit our model on:
+
+```{r}
+randomForClasses <- predict(mod_rf, newdata = validation)
+```
+
+The random forest approach on the smaller but complete number of variables performs very well:
+
+```{r}
+confusionMatrix(randomForClasses, validation$classe)
+```
+
+Finally, here are the predictions for the provided testing set:
+
+```{r}
+assignment_testing <- read.csv("pml-testing.csv")
+randomForClasses_test <- predict(mod_rf, newdata = assignment_testing)
+randomForClasses_test
+```
