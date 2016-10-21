@@ -56,6 +56,10 @@ validation = dataset[-inTrain,]
 
 ## Random Forest
 
+We will use a random forest method to train on 70% of the provided training set, and keep the rest for an out of sample error estimate.
+To improve results, we pre-process the data by centering them and rescaling them, so that all continuous variables vary within a comparably small range of values.
+We use cross-validation (method = "cv"), to break the training set into k-folds.
+
 ```{r}
 
 set.seed(211)
@@ -69,7 +73,9 @@ mod_rf <- train(classe ~ .,
                 preProc = c("center", "scale"))
 ```
 
-We test our model on an out-of-sample validation test, different than the training one we fit our model on:
+## Out of sample error
+
+To find the out-of-sample error of our model, we use the validation sample that we took aside at the beginning, which is different than the training one we fit our model on:
 
 ```{r}
 randomForClasses <- predict(mod_rf, newdata = validation)
@@ -80,6 +86,15 @@ The random forest approach on the smaller but complete number of variables perfo
 ```{r}
 confusionMatrix(randomForClasses, validation$classe)
 ```
+
+The out of sample error is then the error rate on the external validation set:
+
+```{r}
+outOfSampleError <- 1. - sum(randomForClasses == validation$classe)/length(validation$classe)
+paste0("Out of sample error estimation: ", round(outOfSampleError*100, digits = 2), "%")
+```
+
+## Predictions for testing set
 
 Finally, here are the predictions for the provided testing set:
 

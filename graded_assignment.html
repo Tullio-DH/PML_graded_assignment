@@ -317,6 +317,7 @@ validation = dataset[-inTrain,]</code></pre>
 </div>
 <div id="random-forest" class="section level2">
 <h2>Random Forest</h2>
+<p>We will use a random forest method to train on 70% of the provided training set, and keep the rest for an out of sample error estimate. To improve results, we pre-process the data by centering them and rescaling them, so that all continuous variables vary within a comparably small range of values. We use cross-validation (method = “cv”), to break the training set into k-folds.</p>
 <pre class="r"><code>set.seed(211)
 ctrl &lt;- trainControl(method = &quot;cv&quot;,
                      verboseIter = FALSE)
@@ -326,7 +327,10 @@ mod_rf &lt;- train(classe ~ .,
                 trControl = ctrl,
                 #centers and scales predictors
                 preProc = c(&quot;center&quot;, &quot;scale&quot;))</code></pre>
-<p>We test our model on an out-of-sample validation test, different than the training one we fit our model on:</p>
+</div>
+<div id="out-of-sample-error" class="section level2">
+<h2>Out of sample error</h2>
+<p>To find the out-of-sample error of our model, we use the validation sample that we took aside at the beginning, which is different than the training one we fit our model on:</p>
 <pre class="r"><code>randomForClasses &lt;- predict(mod_rf, newdata = validation)</code></pre>
 <p>The random forest approach on the smaller but complete number of variables performs very well:</p>
 <pre class="r"><code>confusionMatrix(randomForClasses, validation$classe)</code></pre>
@@ -361,6 +365,13 @@ mod_rf &lt;- train(classe ~ .,
 ## Detection Rate         0.2841   0.1924   0.1742   0.1628   0.1832
 ## Detection Prevalence   0.2845   0.1930   0.1754   0.1638   0.1833
 ## Balanced Accuracy      0.9992   0.9965   0.9988   0.9963   0.9980</code></pre>
+<p>The out of sample error is then the error rate on the external validation set:</p>
+<pre class="r"><code>outOfSampleError &lt;- 1. - sum(randomForClasses == validation$classe)/length(validation$classe)
+paste0(&quot;Out of sample error estimation: &quot;, round(outOfSampleError*100, digits = 2), &quot;%&quot;)</code></pre>
+<pre><code>## [1] &quot;Out of sample error estimation: 0.34%&quot;</code></pre>
+</div>
+<div id="predictions-for-testing-set" class="section level2">
+<h2>Predictions for testing set</h2>
 <p>Finally, here are the predictions for the provided testing set:</p>
 <pre class="r"><code>assignment_testing &lt;- read.csv(&quot;pml-testing.csv&quot;)
 randomForClasses_test &lt;- predict(mod_rf, newdata = assignment_testing)
